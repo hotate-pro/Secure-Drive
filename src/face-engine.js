@@ -99,6 +99,26 @@ function canvasRGBTensor(canvas, size) {
   return new ort.Tensor("float32", out, [1,3,size,size]);
 }
 
+function canvasBGRRawTensor(canvas, size) {
+  const c=document.createElement("canvas");
+  c.width=c.height=size;
+  const ctx=c.getContext("2d", {willReadFrequently:true});
+  ctx.drawImage(canvas,0,0,size,size);
+  const d=ctx.getImageData(0,0,size,size).data;
+  const plane=size*size;
+  const out=new Float32Array(3*plane);
+  let p=0;
+  for(let y=0;y<size;y++) for(let x=0;x<size;x++){
+    const i=(y*size+x)*4;
+    // YuNet 2023mar expects BGR, 0..255, NCHW, no normalization.
+    out[p]=d[i+2];
+    out[plane+p]=d[i+1];
+    out[2*plane+p]=d[i];
+    p++;
+  }
+  return new ort.Tensor("float32", out, [1,3,size,size]);
+}
+
 function solve4x4(A,b){
   const m=A.map((r,i)=>[...r,b[i]]);
   for(let i=0;i<4;i++){
@@ -178,7 +198,7 @@ export function getProvider(){ return provider; }
 
 export async function detect(canvas, threshold=0.60){
   if(!detector) throw new Error("Face engine is not initialized");
-  const input=canvasRGBTensor(canvas,SIZE);
+  const input=canvasBGRRawTensor(canvas,SIZE);
   const out=await detector.run({[detector.inputNames[0]]:input});
   return decodeYuNet(detector.outputNames.map(n=>out[n]),canvas.width,canvas.height,threshold);
 }
