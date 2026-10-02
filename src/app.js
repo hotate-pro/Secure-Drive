@@ -240,7 +240,8 @@ async function faceVerify(user){
     document.querySelector("#challenge").textContent=
       challenge==="center"?"正面を向いてください":challenge==="left"?"画面の左を向いてください":"画面の右を向いてください";
 
-    const ok=challenge==="center"?Math.abs(p.yaw)<0.12:challenge==="left"?p.yaw<-0.16:p.yaw>0.16;
+    // The preview is mirrored for the user. The raw camera frame is not.
+    const ok=challenge==="center"?Math.abs(p.yaw)<0.12:challenge==="left"?p.yaw>0.16:p.yaw<-0.16;
     if(ok){
       passed++;
       document.querySelector("#progress").style.width=`${passed/challenges.length*100}%`;
