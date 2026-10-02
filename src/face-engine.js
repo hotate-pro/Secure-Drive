@@ -173,12 +173,12 @@ function l2(v){
 export async function initFaceEngine(onProgress=()=>{}){
   onProgress("ONNX Runtimeを準備中…");
   ort.env.wasm.wasmPaths="/ort/";
-  ort.env.wasm.numThreads=Math.min(4,navigator.hardwareConcurrency||2);
+  ort.env.wasm.numThreads=navigator.crossOriginIsolated ? Math.min(4,navigator.hardwareConcurrency||2) : 1;
 
   const options={graphOptimizationLevel:"all"};
   if(navigator.gpu){
     try {
-      detector=await ort.InferenceSession.create("/models/yunet.onnx",{...options,executionProviders:["webgpu"]});
+      detector=await ort.InferenceSession.create("/models/yunet.onnx",{...options,executionProviders:["webgpu","wasm"]});
       recognizer=await ort.InferenceSession.create("/models/arcface_mbf.onnx",{...options,executionProviders:["webgpu"]});
       provider="webgpu";
       onProgress("WebGPUで顔認証エンジン準備完了");
